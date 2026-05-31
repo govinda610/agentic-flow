@@ -11,46 +11,26 @@ and talk to your agents conversationally over **Telegram**.
 ## Demo
 
 An end-to-end walkthrough — building a multi-agent workflow on the canvas and running it with
-live monitoring (the Telegram integration is shown in the screenshots below):
+live monitoring:
 
 https://github.com/user-attachments/assets/75b168e6-0b39-403b-8154-a182403fcd27
 
 ### Screenshots
 
-A walkthrough in five frames — **click any panel to expand it**, then collapse it and open the next.
+A cycling tour of the platform — running a Data Science workflow, configuring an agent's system
+prompt, the Design Copilot generating a graph from plain English, and the live Telegram
+conversation:
 
-<details open>
-<summary><b>1 · Running a Data Science workflow</b> — ask a regression question, get a computed answer back</summary>
-
-![Data Science workflow run](screenshots/01-data-science-workflow-run.png)
-
-</details>
+![Agentic Flow screenshots](screenshots/agentic-flow-screens.gif)
 
 <details>
-<summary><b>2 · Building a workflow</b> — defining the system prompt for a deep researcher agent</summary>
+<summary>Full-resolution stills</summary>
 
-![Defining a deep researcher agent](screenshots/02-deep-researcher-prompt.png)
-
-</details>
-
-<details>
-<summary><b>3 · Design Copilot</b> — describe a workflow in plain English, watch it generate a complete graph</summary>
-
-![Copilot generating a workflow](screenshots/03-copilot-generate.png)
-
-</details>
-
-<details>
-<summary><b>4 · Copilot result</b> — the generated workflow, auto-laid-out on the canvas with conditional edges</summary>
-
-![Generated workflow on the canvas](screenshots/04-copilot-canvas.png)
-
-</details>
-
-<details>
-<summary><b>5 · Telegram integration</b> — ask a workflow from Telegram, get the answer back on your phone</summary>
-
-![Live Telegram conversation](screenshots/05-telegram-conversation.jpeg)
+- [Running a Data Science workflow](screenshots/01-data-science-workflow-run.png)
+- [Defining a deep researcher agent's system prompt](screenshots/02-deep-researcher-prompt.png)
+- [Design Copilot generating a workflow](screenshots/03-copilot-generate.png)
+- [Generated workflow on the canvas](screenshots/04-copilot-canvas.png)
+- [Live Telegram conversation](screenshots/05-telegram-conversation.jpeg)
 
 </details>
 
