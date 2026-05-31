@@ -42,6 +42,61 @@ human-in-the-loop pause/resume, `astream_events()` for live token/cost/tool moni
 safe parallel fan-out — all as first-class primitives. The full comparison against CrewAI,
 AutoGen, and openclaw.ai is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#6-runtime-justification--why-langgraph).
 
+## Capabilities
+
+**Agent configuration — every dimension is data, editable in the UI.**
+- **Identity & behaviour:** name, description, system prompt (the agent's "personality"), model,
+  temperature, and `max_tokens`.
+- **Tools:** built-in tools (`code_interpreter`, `web_search`, inbox `send`/`read`, Telegram
+  send, workspace file read/write, todos, memory), plus **user-defined Python tools** and
+  **MCP servers** — all opt-in per node.
+- **Structured output:** declare typed fields (`string` · `boolean` · `integer` · `number` ·
+  `array`); agents return a validated object, which is what conditional edges read.
+- **Skills & memory (deep agents):** a `deep_agent` gets a durable workspace seeded with
+  **SOUL.md** (its profile), **AGENTS.md**, and **MEMORY.md** — a `write_memory` tool persists
+  facts, and **skills** (`SKILL.md` via `SkillsMiddleware`) are attachable. This is an
+  openclaw-style agent profile layered on top of the LangGraph runtime.
+- **Schedules:** any workflow can carry a **cron schedule** (APScheduler) and run itself
+  proactively.
+- **Guardrails & limits:** opt-in per-node middleware — input **blocklist**, **PII redaction**,
+  **cost gate** (abort over a USD budget), and **schema validation** — plus a per-workflow
+  recursion/step limit and `asteval(minimal=True)` sandboxing of edge conditions.
+
+**Orchestration.**
+- **Visual builder** with **conditional edges and feedback loops** — e.g. a verifier that loops
+  back to the coder until it approves.
+- **Nine node types:** `start`/`end`, `simple_llm`, `agent`, `deep_agent`, `supervisor`
+  (delegates to named child specialists), `human_chat` (HITL pause), `telegram_output`,
+  `webhook_trigger`, and `subgraph` (a saved workflow embedded as a node).
+- **Parallel fan-out / fan-in** with a list reducer so concurrent branches never overwrite each
+  other.
+- **Human-in-the-loop:** dynamic `interrupt()` + a durable checkpointer pause and resume runs
+  (from the web gateway or Telegram) without losing state.
+
+**Asynchronous multi-agent communication.** Agents message each other through a persisted
+**inbox** (`send_inbox_message` / `read_inbox_messages`); every message is stored per run and
+visible in the inspector.
+
+**Live monitoring.** SSE streams **real-time logs, node state, inter-agent messages, and
+token/cost** to the canvas; the node inspector exposes **I/O · Logs · Costs · Inbox** tabs.
+Reconnect replays missed events via `last_event_id`.
+
+**External channel.** **Telegram** (polling): `/run`, `/status`, `/approve`, `/reject`,
+`/help`, plus plain-text to start or continue a run. Adding Slack/WhatsApp is one new gateway
+file — see [docs/EXTENDING.md](docs/EXTENDING.md#2-adding-a-messaging-channel).
+
+**Persistence.** SQLite + SQLModel — `Workflow`, `WorkflowRun`, `RunStep` (the persisted message
+history), `CostEvent`, `AgentInbox`, `Agent`, `Capability`. History is durable and surfaced in
+the UI.
+
+**Standout extras.**
+- **Design Copilot** — describe a workflow in plain English; it generates the full graph,
+  auto-lays it out, and auto-saves. It is **canvas-aware**, so a follow-up message becomes an
+  *edit* of the workflow already on the canvas.
+- **Schema-driven, not code-gen** — workflows are JSON compiled to a `StateGraph` at runtime;
+  no node logic is ever `eval`'d.
+- **Export to Python** — download any workflow as a standalone LangGraph script.
+
 ## Architecture
 
 ```mermaid
@@ -174,6 +229,26 @@ pytest test_gateway.py -v        # gateway simulation + export
 pytest test_full_run_lifecycle.py -v   # full run E2E
 pytest -v                        # everything
 ```
+
+Pure-Python suites (`test_engine.py`, `test_middleware.py`, `test_workflow_parser.py`,
+`test_resolve_next_node.py`) run without an API key and cover edge routing, guardrail/PII/cost
+middleware, parser compilation, and conditional-edge resolution.
+
+## Roadmap
+
+Scoped out of the current build, in rough priority order:
+
+- **Memory for lightweight agents** — durable memory lives on `deep_agent` workspaces today;
+  `simple_llm` / `agent` nodes are per-run only.
+- **More channels** — Slack and WhatsApp gateways (the `BaseMessagingGateway` abstraction is in
+  place; only Telegram ships today).
+- **Reusable agent presets** — the `Agent` table exists; wiring saved agents as first-class
+  canvas nodes is in progress.
+- **Run-history viewer** — past runs (with their inbox and cost records) are persisted but not
+  yet browsable from a dedicated UI panel.
+- **Richer guardrails** — current guardrails are deterministic middleware (blocklist · PII ·
+  cost · schema); LLM-based moderation and rate limiting are future work.
+- **File / dataset upload** — attaching data to a run directly from the UI.
 
 ## Tech stack
 
