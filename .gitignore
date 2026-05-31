@@ -1,0 +1,76 @@
+# ========================
+# Agentic Flow — Git Ignore
+# ========================
+
+# Secrets (NEVER commit)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Sessions & workspaces (runtime state)
+backend/sessions/
+backend/workspaces/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/src/assets/
+
+# Pi agent state
+.pi/
+
+# Test artifacts
+tests/test_agentic_flow.db
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Logs
+*.log
+
+# Playwright MCP / agent tooling state
+.playwright-mcp/
+.claude/
+
+# Local planning, spec & AI-assist artifacts (not part of the shipped product)
+CLAUDE.md
+AUDIT_FINDINGS.md
+AUDIT_PROMPT.md
+IMPLEMENTATION_PLAN.md
+VERIFICATION_ISSUES.md
+architectural_choices_validation.md
+product_specification.md
+final_spec_and_plan_prompt.txt
+final_implementation_plans/
+ai_studio_prompt*.txt
+very_first_rough_prompt.txt
+references/
+*.pdf

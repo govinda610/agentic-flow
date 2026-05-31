@@ -1,0 +1,78 @@
+{
+  "name": "Data Science Loop",
+  "description": "Sequential feedback loop: Coder Agent writes CSV analysis code, Verifier validates, Reporter summarizes.",
+  "nodes": [
+    {
+      "id": "node_start",
+      "type": "start",
+      "position": {"x": 50, "y": 200},
+      "config": {"label": "Start"}
+    },
+    {
+      "id": "node_coder",
+      "type": "deep_agent",
+      "position": {"x": 300, "y": 200},
+      "config": {
+        "name": "Coder Agent",
+        "system_prompt": "You are a data science expert. Write Python code to analyze the CSV file provided. Focus on computing descriptive statistics and key metrics. Use the code_interpreter tool to run your code and iterate until you have valid results.",
+        "tools": ["code_interpreter", "file_reader", "file_writer"],
+        "max_depth": 1,
+        "max_breadth": 2,
+        "structured_output": null
+      }
+    },
+    {
+      "id": "node_verifier",
+      "type": "agent",
+      "position": {"x": 600, "y": 200},
+      "config": {
+        "name": "Verifier Agent",
+        "system_prompt": "You are a QA engineer. Review the numerical outputs from the Coder Agent. Check for: NaN values, unrealistic numbers, incomplete results. You MUST return a JSON response with exactly these fields.",
+        "tools": [],
+        "structured_output": {
+          "fields": [
+            {"name": "is_approved", "type": "boolean"},
+            {"name": "feedback", "type": "string"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "node_reporter",
+      "type": "simple_llm",
+      "position": {"x": 900, "y": 200},
+      "config": {
+        "name": "Reporter",
+        "system_prompt": "Summarize the final validated metrics from the Coder Agent into a clear, concise report with bullet points."
+      }
+    },
+    {
+      "id": "node_end",
+      "type": "end",
+      "position": {"x": 1150, "y": 200},
+      "config": {"label": "End"}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "source": "node_start",    "target": "node_coder",    "type": "normal",      "condition": null},
+    {"id": "e2", "source": "node_coder",    "target": "node_verifier", "type": "normal",      "condition": null},
+    {
+      "id": "e3",
+      "source": "node_verifier",
+      "target": "node_coder",
+      "type": "conditional",
+      "condition": "state['node_outputs'].get('node_verifier', {}).get('is_approved') == False",
+      "label": "Retry"
+    },
+    {
+      "id": "e4",
+      "source": "node_verifier",
+      "target": "node_reporter",
+      "type": "conditional",
+      "condition": "state['node_outputs'].get('node_verifier', {}).get('is_approved') == True",
+      "label": "Approved"
+    },
+    {"id": "e6", "source": "node_verifier", "target": "node_reporter", "type": "normal",      "condition": null, "label": "Fallback"},
+    {"id": "e5", "source": "node_reporter", "target": "node_end",     "type": "normal",      "condition": null}
+  ]
+}

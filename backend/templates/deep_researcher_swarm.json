@@ -1,0 +1,67 @@
+{
+  "name": "Deep Researcher Swarm",
+  "description": "Parallel agent swarm: Coordinator decomposes topic into sub-searches, Researchers run in parallel, Aggregator compiles results, sends to Telegram.",
+  "nodes": [
+    {"id": "node_start", "type": "start", "position": {"x": 50,   "y": 300}, "config": {"label": "Start"}},
+    {
+      "id": "node_coordinator",
+      "type": "agent",
+      "position": {"x": 300, "y": 300},
+      "config": {
+        "name": "Coordinator",
+        "system_prompt": "You are a research coordinator. Given a research topic, decompose it into exactly 2 distinct search keywords or sub-topics. Return them as a JSON array: {\"keywords\": [\"keyword1\", \"keyword2\"]}",
+        "tools": [],
+        "max_depth": 1,
+        "max_breadth": 2,
+        "structured_output": {
+          "fields": [{"name": "keywords", "type": "array"}]
+        }
+      }
+    },
+    {
+      "id": "node_researcher",
+      "type": "agent",
+      "position": {"x": 600, "y": 300},
+      "config": {
+        "name": "Researcher",
+        "system_prompt": "You are a research specialist. Given a keyword or sub-topic in your input, search for and compile a comprehensive summary of findings on that specific topic. Be thorough and cite your reasoning.",
+        "tools": ["web_search"],
+        "is_parallel_clone_target": true,
+        "max_depth": 0,
+        "max_breadth": 0
+      }
+    },
+    {
+      "id": "node_aggregator",
+      "type": "deep_agent",
+      "position": {"x": 900, "y": 300},
+      "config": {
+        "name": "Aggregator",
+        "system_prompt": "You are a research synthesizer. Compile the research findings from all parallel researchers (found in 'parallel_results' of your input state) into one coherent, well-structured report. Identify key themes and contradictions.",
+        "tools": ["file_writer"],
+        "structured_output": null
+      }
+    },
+    {
+      "id": "node_telegram",
+      "type": "telegram_output",
+      "position": {"x": 1150, "y": 300},
+      "config": {"label": "Send to Telegram", "message_template": "{node_aggregator_output}"}
+    },
+    {"id": "node_end", "type": "end", "position": {"x": 1400, "y": 300}, "config": {"label": "End"}}
+  ],
+  "edges": [
+    {"id": "e1", "source": "node_start",       "target": "node_coordinator", "type": "normal",           "condition": null},
+    {
+      "id": "e2",
+      "source": "node_coordinator",
+      "target": "node_researcher",
+      "type": "parallel_fan_out",
+      "condition": null,
+      "fan_out_from": "node_outputs.node_coordinator.keywords"
+    },
+    {"id": "e3", "source": "node_researcher",  "target": "node_aggregator",  "type": "parallel_fan_in",  "condition": null},
+    {"id": "e4", "source": "node_aggregator",  "target": "node_telegram",    "type": "normal",           "condition": null},
+    {"id": "e5", "source": "node_telegram",    "target": "node_end",         "type": "normal",           "condition": null}
+  ]
+}

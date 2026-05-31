@@ -1,0 +1,34 @@
+{
+  "name": "AI Co-Scientist",
+  "description": "Hierarchical nested workflow: Chief Scientist delegates to Deep Researcher Swarm sub-workflow and Data Science Loop sub-workflow as tools, then Synthesizer summarizes findings.",
+  "nodes": [
+    {"id": "node_start", "type": "start", "position": {"x": 50, "y": 200}, "config": {"label": "Start"}},
+    {
+      "id": "node_chief_scientist",
+      "type": "deep_agent",
+      "position": {"x": 300, "y": 200},
+      "config": {
+        "name": "Chief Scientist",
+        "system_prompt": "You are a lead co-scientist coordinating research. You have two main workflows registered as tools: run_deep_researcher_swarm (for literary search review) and run_data_science_loop (for statistical analysis of data). Decompose the user query, call both tools, and pass their results to the Synthesizer.",
+        "tools": ["web_search", "run_deep_researcher_swarm", "run_data_science_loop"],
+        "max_depth": 1,
+        "max_breadth": 2
+      }
+    },
+    {
+      "id": "node_synthesizer",
+      "type": "simple_llm",
+      "position": {"x": 600, "y": 200},
+      "config": {
+        "name": "Synthesizer",
+        "system_prompt": "Compile the outputs of both the researcher swarm and the data analysis loop into a structured scientific summary report."
+      }
+    },
+    {"id": "node_end", "type": "end", "position": {"x": 900, "y": 200}, "config": {"label": "End"}}
+  ],
+  "edges": [
+    {"id": "e1", "source": "node_start",            "target": "node_chief_scientist", "type": "normal", "condition": null},
+    {"id": "e2", "source": "node_chief_scientist",  "target": "node_synthesizer",     "type": "normal", "condition": null},
+    {"id": "e3", "source": "node_synthesizer",      "target": "node_end",             "type": "normal", "condition": null}
+  ]
+}
