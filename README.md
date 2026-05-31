@@ -13,7 +13,7 @@ and talk to your agents conversationally over **Telegram**.
 An end-to-end walkthrough — building a multi-agent workflow on the canvas and running it with
 live monitoring:
 
-https://github.com/user-attachments/assets/75b168e6-0b39-403b-8154-a182403fcd27
+<video src="https://github.com/govinda610/agentic-flow/raw/main/screenshots/agentic-flow-demo.mp4" poster="screenshots/01-data-science-workflow-run.png" width="100%" controls muted></video>
 
 ### Screenshots
 
