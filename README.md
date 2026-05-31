@@ -10,7 +10,10 @@ and talk to your agents conversationally over **Telegram**.
 
 ## Demo
 
-<!-- DEMO_VIDEO -->
+An end-to-end walkthrough — building a multi-agent workflow on the canvas and running it with
+live monitoring (the Telegram integration is shown in the screenshots below):
+
+https://github.com/user-attachments/assets/75b168e6-0b39-403b-8154-a182403fcd27
 
 ### Screenshots
 
