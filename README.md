@@ -11,30 +11,45 @@ and talk to your agents conversationally over **Telegram**.
 ## Demo
 
 <!-- DEMO_VIDEO -->
-_A recorded end-to-end demo (building a workflow, running it with 2+ agents, and a live Telegram
-conversation) will be embedded here._
 
 ### Screenshots
 
-**Running a pre-built Data Science workflow** — asking a regression question and getting a
-computed answer back:
+A walkthrough in five frames — **click any panel to expand it**, then collapse it and open the next.
+
+<details open>
+<summary><b>1 · Running a Data Science workflow</b> — ask a regression question, get a computed answer back</summary>
 
 ![Data Science workflow run](screenshots/01-data-science-workflow-run.png)
 
-**Building a workflow** — defining the system prompt for a deep researcher agent:
+</details>
+
+<details>
+<summary><b>2 · Building a workflow</b> — defining the system prompt for a deep researcher agent</summary>
 
 ![Defining a deep researcher agent](screenshots/02-deep-researcher-prompt.png)
 
-**Design Copilot** — describing a workflow in plain English and watching it generate a complete
-graph with conditional edges, laid out automatically on the canvas:
+</details>
+
+<details>
+<summary><b>3 · Design Copilot</b> — describe a workflow in plain English, watch it generate a complete graph</summary>
 
 ![Copilot generating a workflow](screenshots/03-copilot-generate.png)
+
+</details>
+
+<details>
+<summary><b>4 · Copilot result</b> — the generated workflow, auto-laid-out on the canvas with conditional edges</summary>
+
 ![Generated workflow on the canvas](screenshots/04-copilot-canvas.png)
 
-**Telegram integration** — asking a workflow a question from Telegram and getting a correct
-response back on the phone:
+</details>
+
+<details>
+<summary><b>5 · Telegram integration</b> — ask a workflow from Telegram, get the answer back on your phone</summary>
 
 ![Live Telegram conversation](screenshots/05-telegram-conversation.jpeg)
+
+</details>
 
 ## Why LangGraph
 
