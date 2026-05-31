@@ -42,11 +42,25 @@ human-in-the-loop pause/resume, `astream_events()` for live token/cost/tool moni
 safe parallel fan-out — all as first-class primitives. The full comparison against CrewAI,
 AutoGen, and openclaw.ai is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#6-runtime-justification--why-langgraph).
 
+## Why Python + TypeScript
+
+**Python** on the backend because the entire agent ecosystem — LangGraph, LangChain tools,
+`langchain-mcp-adapters`, the LLM SDKs — is Python-first; choosing anything else would mean
+re-implementing or bridging that runtime. **TypeScript + React** on the frontend because the
+visual builder is a stateful, interactive graph editor (`@xyflow/react`), where static typing
+across the canvas → workflow-JSON → API boundary prevents an entire class of schema-mismatch
+bugs. The two halves share one contract: the workflow JSON schema.
+
 ## Capabilities
 
-**Agent configuration — every dimension is data, editable in the UI.**
-- **Identity & behaviour:** name, description, system prompt (the agent's "personality"), model,
-  temperature, and `max_tokens`.
+**Agent configuration — ~15 configurable dimensions per agent, all data in the workflow
+schema and honored by the real runtime.** The node inspector surfaces the primary ones
+(system prompt, tools, skills, MCP servers, recursion limits, structured output); model,
+temperature, and `max_tokens` are schema-level config.
+- **Identity & behaviour:** name, **role/description**, system prompt (the agent's
+  "personality"), model, temperature, and `max_tokens`. *(The PDF's "role" maps to
+  description + system prompt; "channels" is wired per workflow via the `telegram_output`
+  node, not a per-agent column — see External channel below.)*
 - **Tools:** built-in tools (`code_interpreter`, `web_search`, inbox `send`/`read`, Telegram
   send, workspace file read/write, todos, memory), plus **user-defined Python tools** and
   **MCP servers** — all opt-in per node.
@@ -74,8 +88,10 @@ AutoGen, and openclaw.ai is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#6-run
   (from the web gateway or Telegram) without losing state.
 
 **Asynchronous multi-agent communication.** Agents message each other through a persisted
-**inbox** (`send_inbox_message` / `read_inbox_messages`); every message is stored per run and
-visible in the inspector.
+**inbox** (`send_inbox_message` / `read_inbox_messages`) backed by the `AgentInbox` table —
+decoupled send/read, not a synchronous call, so a swarm of agents can hand off work
+reliably. Every message is stored per run and surfaced in the inspector's **Inbox** tab,
+giving the agent-to-agent message trail full visibility.
 
 **Live monitoring.** SSE streams **real-time logs, node state, inter-agent messages, and
 token/cost** to the canvas; the node inspector exposes **I/O · Logs · Costs · Inbox** tabs.
@@ -97,6 +113,36 @@ the UI.
   no node logic is ever `eval`'d.
 - **Export to Python** — download any workflow as a standalone LangGraph script.
 
+## Agent types
+
+A spectrum of agent kinds, from a single LLM call up to a team supervisor — each is just a
+node `type` in the schema:
+
+| Type | What it is | Use it for |
+|---|---|---|
+| `simple_llm` | One LLM call with a system prompt | Classification, rewriting, a quick decision |
+| `agent` | ReAct tool-using agent, optional structured output | Tasks needing tools (code, search) + typed results |
+| `deep_agent` | Agent with a durable filesystem, **SOUL.md / AGENTS.md / MEMORY.md**, `write_memory`, and attachable **skills** | Long-running work that must remember and follow a profile |
+| `supervisor` | Routes a task to named child specialists | An agent **team** with a router/manager on top |
+
+## Orchestration patterns
+
+Because workflows are graphs, the common multi-agent topologies are all expressible — and
+three ship as templates:
+
+| Pattern | How it's built | Shipped example |
+|---|---|---|
+| **Sequential pipeline** | Normal edges A → B → C | building block of every template |
+| **Feedback loop** | A conditional edge pointing *backward* (verifier → coder until approved) | **Data Science Loop** |
+| **Swarm (parallel fan-out/in)** | `parallel_fan_out` over a list field → branches → `parallel_fan_in` | **Deep Researcher Swarm** |
+| **Supervisor / router** | A `supervisor` node delegating to named child agents | supervisor node |
+| **Hierarchical / agents-as-tools** | A saved workflow embedded as a `subgraph` node and invoked by a parent | **AI Co-Scientist** |
+| **Human-in-the-loop** | A `human_chat` node that `interrupt()`s and resumes | any workflow |
+
+**Interaction rules** (from the PDF's agent-config list) are exactly these conditional
+edges, supervisor routing, and `asteval`-evaluated edge conditions — the deterministic logic
+that decides which agent runs next.
+
 ## Architecture
 
 ```mermaid
@@ -114,6 +160,29 @@ flowchart TD
 Three layers with clear separation — UI (`frontend/`), runtime integration
 (`backend/engine/`, `backend/gateway/`), and persistence (`backend/models/` + SQLite). Details
 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Requirements coverage
+
+How the platform maps onto the challenge's stated requirements:
+
+| Requirement | Where it lives |
+|---|---|
+| Create agents; configure personality, tools, schedules, memory, limits | Node inspector + workflow schema (`backend/engine/parser.py`); ~15 dimensions per agent |
+| Agent CRUD — name, role, system prompt, model, tools, channels | Agent fields (`backend/models/agent.py`) + node config; *role* = description/system prompt, *channels* = Telegram via `telegram_output` |
+| Agent config — schedules · memory · skills · interaction rules · guardrails | cron (`scheduler.py`) · deep-agent workspace · `SkillsMiddleware` · conditional edges/supervisor routing · per-node guardrail middleware |
+| Real runtime executing agent logic (not a mockup) | LangGraph `StateGraph` compiled + run via `astream_events()` (`runner.py`) |
+| Agents communicate asynchronously | persisted `AgentInbox` (`send`/`read_inbox_messages`) |
+| Message history persisted **and visible in the UI** | `RunStep` table → inspector I/O · Logs · Inbox tabs |
+| ≥1 agent on an external channel | **Telegram** gateway, polling (`gateway/telegram.py`) |
+| Visual builder with conditions **and feedback loops** | `@xyflow/react` canvas + conditional/loop edges |
+| ≥2 pre-built templates | **3** templates in `backend/templates/` |
+| Live monitoring — logs, inter-agent messages, token/cost | SSE stream → canvas + inspector tabs |
+| Fully local, single setup command | `./start.sh` |
+| Clear UI / runtime / persistence separation | `frontend/` · `backend/engine/` + `backend/gateway/` · `backend/models/` |
+| Tests for agent creation, workflow execution, message delivery | `tests/` (E2E + pure-Python suites) |
+| README — architecture diagram, setup, runtime justification | this file + [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Instructions for adding templates / channels | [docs/EXTENDING.md](docs/EXTENDING.md) |
+| Language + framework choice justified | [Why LangGraph](#why-langgraph) · [Why Python + TypeScript](#why-python--typescript) |
 
 ## Quick Start
 
